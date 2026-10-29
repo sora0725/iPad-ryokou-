@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ハワイ旅程">
+<meta name="theme-color" content="#0E6E6B">
+<title>ハワイ旅のしおり</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap">
+<style>
+/* Layout: one phone-width column — lagoon header with countdown, day chips, timeline cards, fixed bottom tab bar */
+:root {
+  --bg: #F1F6F5;
+  --surface: #FFFFFF;
+  --ink: #12302F;
+  --muted: #5B7371;
+  --line: #D9E5E3;
+  --lagoon: #0E6E6B;
+  --lagoon-soft: #DCEFEC;
+  --on-lagoon: #FFFFFF;
+  --hibiscus: #D93F55;
+  --hibiscus-soft: #FBE3E6;
+  --sun: #E9A22B;
+  --shadow: 0 1px 2px rgba(18,48,47,.06), 0 4px 14px rgba(18,48,47,.06);
+  --font-display: "Bricolage Grotesque", "Zen Maru Gothic", system-ui, sans-serif;
+  --font-body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1918; --surface: #132524; --ink: #E2EEEC; --muted: #8DA6A3; --line: #22403E;
+    --lagoon: #3DB0A8; --lagoon-soft: #173836; --on-lagoon: #04201E;
+    --hibiscus: #FF6E80; --hibiscus-soft: #3A1E23; --sun: #F2B94F;
+    --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1918; --surface: #132524; --ink: #E2EEEC; --muted: #8DA6A3; --line: #22403E;
+  --lagoon: #3DB0A8; --lagoon-soft: #173836; --on-lagoon: #04201E;
+  --hibiscus: #FF6E80; --hibiscus-soft: #3A1E23; --sun: #F2B94F;
+  --shadow: 0 1px 2px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--lagoon);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+.wrap {
+  max-width: 560px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Header */
+.hero { background: var(--lagoon); color: var(--on-lagoon); padding-block: 18px 22px; }
+.hero .wrap { display: grid; gap: 4px; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; opacity: .85; }
+.hero h1 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.3; text-wrap: balance; }
+.countdown { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.countdown .big { font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
+.countdown .unit { font-size: 15px; font-weight: 700; }
+.countdown .sub { font-size: 13px; opacity: .85; width: 100%; }
+.progress { margin-top: 12px; display: grid; gap: 6px; }
+.bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.25); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--sun); border-radius: 3px; transition: width .3s; }
+.progress small { font-size: 12px; opacity: .9; font-variant-numeric: tabular-nums; }
+
+/* Day chips */
+.days {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+}
+.days .scroller { display: flex; gap: 8px; overflow-x: auto; padding-block: 10px; scrollbar-width: none; }
+.days .scroller::-webkit-scrollbar { display: none; }
+.chip {
+  flex: 0 0 auto; display: grid; justify-items: center; gap: 0;
+  min-width: 58px; padding: 6px 10px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--surface);
+}
+.chip .d { font-size: 11px; color: var(--muted); }
+.chip .n { font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.chip .w { font-size: 11px; }
+.chip.sun .w { color: var(--hibiscus); }
+.chip.on { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.chip.on .d, .chip.on .w { color: inherit; opacity: .8; }
+.chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--hibiscus); margin-top: 2px; visibility: hidden; }
+.chip.today .dot { visibility: visible; }
+
+/* Main */
+main { padding-block: 16px 120px; }
+.view[hidden] { display: none; }
+.day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.day-head h2 { margin: 0; font-size: 18px; }
+.day-head span { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.notice {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--lagoon-soft); border-radius: var(--r); padding: 10px 12px; margin-bottom: 14px; font-size: 13px;
+}
+.notice p { margin: 0; flex: 1; min-width: 0; }
+.notice button { border: 0; background: none; color: var(--lagoon); font-weight: 700; padding: 0 4px; white-space: nowrap; }
+
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ev {
+  display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: start;
+  background: var(--surface); border-radius: var(--r); padding: 12px; box-shadow: var(--shadow);
+  border-left: 4px solid var(--c, var(--lagoon));
+}
+.ev .time { font-family: var(--font-display); font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.ev .time .tz { display: block; font-family: var(--font-body); font-size: 10px; font-weight: 700; color: var(--hibiscus); }
+.ev .time.none { color: var(--muted); font-size: 12px; font-family: var(--font-body); }
+.ev .body { min-width: 0; border: 0; background: none; text-align: left; padding: 0; display: grid; gap: 2px; }
+.ev .cat { font-size: 11px; font-weight: 700; color: var(--c, var(--lagoon)); letter-spacing: .06em; }
+.ev .title { font-weight: 700; font-size: 16px; line-height: 1.4; overflow-wrap: anywhere; }
+.ev .memo { font-size: 13px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ev .place { font-size: 13px; color: var(--lagoon); text-decoration: none; display: inline-flex; gap: 4px; align-items: center; overflow-wrap: anywhere; width: fit-content; }
+.ev .place svg { flex: 0 0 auto; }
+.ev.done { opacity: .55; }
+.ev.done .title { text-decoration: line-through; }
+.check {
+  width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface);
+  display: grid; place-items: center; padding: 0;
+}
+.check svg { opacity: 0; }
+.done .check, .item.done .check { background: var(--lagoon); border-color: var(--lagoon); }
+.done .check svg, .item.done .check svg { opacity: 1; color: var(--on-lagoon); }
+.empty { text-align: center; color: var(--muted); padding: 32px 12px; border: 1.5px dashed var(--line); border-radius: var(--r); font-size: 14px; }
+
+.cat-move { --c: #3A7BC8; } .cat-sight { --c: var(--lagoon); } .cat-food { --c: #D9772B; }
+.cat-act { --c: #1E9E74; } .cat-shop { --c: #B5539E; } .cat-hotel { --c: #6B6FCF; } .cat-other { --c: var(--muted); }
+
+.fab {
+  position: fixed; z-index: 6;
+  right: max(16px, calc(50% - 280px + 16px), env(safe-area-inset-right, 0px));
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 6px;
+  border: 0; border-radius: 999px; padding: 12px 18px;
+  background: var(--hibiscus); color: #fff; font-weight: 700; box-shadow: 0 6px 18px rgba(217,63,85,.35);
+}
+
+/* Cards / sections */
+.section { display: grid; gap: 10px; margin-bottom: 22px; }
+.section h2 { margin: 0; font-size: 16px; }
+.card { background: var(--surface); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); display: grid; gap: 12px; }
+.clocks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.clock { background: var(--surface); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow); }
+.clock small { font-size: 12px; color: var(--muted); display: block; }
+.clock b { font-family: var(--font-display); font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.clock span { font-size: 12px; color: var(--muted); display: block; font-variant-numeric: tabular-nums; }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+
+.field { display: grid; gap: 4px; }
+.field label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.field input, .field select, .field textarea {
+  width: 100%; min-width: 0; border: 1px solid var(--line); background: var(--bg);
+  border-radius: 10px; padding: 10px 12px; font-size: 16px;
+}
+.field textarea { resize: vertical; min-height: 72px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row2 > * { min-width: 0; }
+
+.btn { border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 700; background: var(--lagoon); color: var(--on-lagoon); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn.danger { background: var(--hibiscus-soft); color: var(--hibiscus); }
+.btn.danger.armed { background: var(--hibiscus); color: #fff; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Packing */
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; font-size: 16px; }
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); }
+.item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.item:last-child { border-bottom: 0; }
+.item .txt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.item.done .txt { color: var(--muted); text-decoration: line-through; }
+.item .del { border: 0; background: none; color: var(--muted); padding: 4px; }
+.pack-count { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Tab bar */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 7;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
+}
+.tabbar .inner { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+.tab { border: 0; background: none; padding: 8px 4px 10px; display: grid; justify-items: center; gap: 2px; font-size: 11px; color: var(--muted); }
+.tab.on { color: var(--lagoon); font-weight: 700; }
+
+/* Sheet */
+.overlay { position: fixed; inset: 0; z-index: 20; background: rgba(6,20,19,.45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet {
+  width: 100%; max-width: 560px; max-height: 92%; overflow-y: auto;
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  padding-top: 8px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 12px;
+  animation: up .22s ease-out;
+}
+@keyframes up { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } .bar > i { transition: none; } }
+.grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line); justify-self: center; }
+.sheet h3 { margin: 0; font-size: 17px; }
+.cats { display: flex; flex-wrap: wrap; gap: 6px; }
+.cats button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.cats button.on { background: var(--c); border-color: var(--c); color: #fff; font-weight: 700; }
+.sheet-actions { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.sheet-actions .right { display: flex; gap: 8px; margin-left: auto; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 30;
+  bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg); border-radius: 999px; padding: 8px 16px; font-size: 13px;
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow" id="hero-dates">ALOHA</div>
+    <h1 id="hero-title">ハワイ旅行</h1>
+    <div class="countdown" id="countdown"></div>
+    <div class="progress">
+      <div class="bar"><i id="bar" style="width:0"></i></div>
+      <small id="progress-text"></small>
+    </div>
+  </div>
+</header>
+
+<nav class="days" id="days-nav" aria-label="日付を選ぶ">
+  <div class="wrap"><div class="scroller" id="days"></div></div>
+</nav>
+
+<main class="wrap">
+  <section class="view" id="view-plan">
+    <div class="day-head"><h2 id="day-title"></h2><span id="day-count"></span></div>
+    <ul class="timeline" id="timeline"></ul>
+  </section>
+
+  <section class="view" id="view-pack" hidden>
+    <div class="section">
+      <div class="day-head"><h2>持ち物チェック</h2><span class="pack-count" id="pack-count"></span></div>
+      <form class="add-row" id="pack-form">
+        <input id="pack-input" placeholder="持ち物を追加（例：日焼け止め）" autocomplete="off">
+        <button class="btn" type="submit">追加</button>
+      </form>
+      <ul class="list" id="pack-list"></ul>
+    </div>
+  </section>
+
+  <section class="view" id="view-info" hidden>
+    <div class="section">
+      <h2>いまの時刻</h2>
+      <div class="clocks">
+        <div class="clock"><small>ハワイ（HST）</small><b id="clk-hst">--:--</b><span id="clk-hst-d"></span></div>
+        <div class="clock"><small>日本（JST）</small><b id="clk-jst">--:--</b><span id="clk-jst-d"></span></div>
+      </div>
+      <p class="hint">ハワイは日本より19時間遅れ（サマータイムなし）。日本の正午＝ハワイの前日17時。</p>
+    </div>
+
+    <form class="section" id="trip-form">
+      <h2>旅行の基本情報</h2>
+      <div class="card">
+        <div class="field"><label for="t-title">旅行の名前</label><input id="t-title" required></div>
+        <div class="row2">
+          <div class="field"><label for="t-start">出発日</label><input id="t-start" type="date" required></div>
+          <div class="field"><label for="t-end">帰国日</label><input id="t-end" type="date" required></div>
+        </div>
+        <div class="field"><label for="t-flight">フライト</label><textarea id="t-flight" placeholder="便名・出発時刻・予約番号など"></textarea></div>
+        <div class="field"><label for="t-hotel">ホテル</label><textarea id="t-hotel" placeholder="ホテル名・住所・予約番号など"></textarea></div>
+        <div class="field"><label for="t-notes">メモ</label><textarea id="t-notes" placeholder="緊急連絡先、保険、ESTA番号など"></textarea></div>
+        <div class="btns"><button class="btn" type="submit">保存</button></div>
+      </div>
+    </form>
+
+    <div class="section">
+      <h2>バックアップ</h2>
+      <div class="card">
+        <p class="hint">データはこの端末のブラウザに保存されます。機種変更や別の端末で使うときは、コピーした文字を貼り付けて読み込んでください。</p>
+        <div class="field"><label for="backup">バックアップ用データ</label><textarea id="backup" rows="4" placeholder="ここに貼り付けて「読み込む」"></textarea></div>
+        <div class="btns">
+          <button class="btn ghost" type="button" id="b-export">データをコピー</button>
+          <button class="btn ghost" type="button" id="b-import">読み込む</button>
+          <button class="btn danger" type="button" id="b-reset">日程表の内容に戻す</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fab" type="button" aria-label="予定を追加">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>予定を追加
+</button>
+
+<nav class="tabbar" aria-label="画面切り替え">
+  <div class="inner">
+    <button class="tab on" data-view="plan" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>日程
+    </button>
+    <button class="tab" data-view="pack" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="13" rx="3"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M9 13l2 2 4-4"/></svg>持ち物
+    </button>
+    <button class="tab" data-view="info" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>情報
+    </button>
+  </div>
+</nav>
+
+<div class="overlay" id="overlay" hidden>
+  <form class="sheet" id="ev-form" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="grab"></div>
+    <h3 id="sheet-title">予定を追加</h3>
+    <div class="row2">
+      <div class="field"><label for="e-date">日付</label><select id="e-date"></select></div>
+      <div class="field"><label for="e-time">時刻</label><input id="e-time" type="time"></div>
+    </div>
+    <div class="field"><label for="e-tz">時刻の基準</label>
+      <select id="e-tz"><option value="HST">ハワイ時間</option><option value="JST">日本時間（日本の空港など）</option></select></div>
+    <div class="field"><label>種類</label><div class="cats" id="e-cats"></div></div>
+    <div class="field"><label for="e-title">予定</label><input id="e-title" required placeholder="例：ダイヤモンドヘッド登山"></div>
+    <div class="field"><label for="e-place">場所（地図で開けます）</label><input id="e-place" placeholder="例：Diamond Head State Monument"></div>
+    <div class="field"><label for="e-memo">メモ</label><textarea id="e-memo" placeholder="予約番号、持ち物、集合場所など"></textarea></div>
+    <div class="sheet-actions">
+      <button class="btn danger" type="button" id="e-del">削除</button>
+      <div class="right">
+        <button class="btn ghost" type="button" id="e-cancel">閉じる</button>
+        <button class="btn" type="submit">保存</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const KEY = 'hawaii-trip-v1';
+  const CATS = [
+    { id: 'move', label: '移動' }, { id: 'sight', label: '観光' }, { id: 'food', label: '食事' },
+    { id: 'act', label: 'アクティビティ' }, { id: 'shop', label: '買い物' }, { id: 'hotel', label: 'ホテル' },
+    { id: 'other', label: 'その他' },
+  ];
+  const WD = ['日', '月', '火', '水', '木', '金', '土'];
+  const $ = (id) => document.getElementById(id);
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+
+  // 出発のご案内（HIS）の日程表より。時刻は tz の現地時間
+  function tripData() {
+    const ev = (date, time, tz, cat, title, place, memo) => ({ id: uid(), date, time, tz, cat, title, place: place || '', memo: memo || '', done: false });
+    return {
+      version: 2,
+      trip: {
+        title: 'ANA ハワイ7日間 ハイアット',
+        start: '2026-11-01', end: '2026-11-07',
+        flight: '往路 ANA NH184　11/1 20:10 成田発 → 11/1 08:10 ホノルル着\n復路 ANA NH181　11/6 12:30 ホノルル発 → 11/7 16:35 成田着\n\n受付 11/1 18:10　成田空港 第1ターミナル 南ウィング4階 全日空チェックインカウンター（Eチケットレシートで各自チェックイン）',
+        hotel: 'HYATT REGENCY WAIKIKI BEACH RESORT\n（ハイアット リージェンシー ワイキキ リゾート&スパ）\nデラックスオーシャンビュー・5泊\n2424 Kalakaua Ave, Honolulu, HI 96815-3289\nTEL (1)808-923-1234\nチェックイン 15:00以降・リゾートフィー込み',
+        notes: '現地手配先：HISホノルル支店（ロイヤル・ハワイアン・センター 3F）\n緊急連絡先1：(1)808-923-3412（毎日 8:00〜18:00）\n緊急連絡先2：(1)808-922-6136（上記以外の時間）\n\n滞在中の特典\n・LeaLeaトロリー＆ワイキキトロリー アラモアナライン乗り放題\n・LeaLea絶景朝ごはん at スカイ ワイキキ（滞在中1回。好きな日に直接レストランへ）',
+      },
+      events: [
+        ev('2026-11-01', '18:10', 'JST', 'move', '成田空港で受付・チェックイン', 'Narita International Airport Terminal 1', '第1ターミナル 南ウィング4階 全日空チェックインカウンター。Eチケットレシート（お客様控え）で各自チェックイン'),
+        ev('2026-11-01', '20:10', 'JST', 'move', '成田発 ANA NH184 ホノルルへ', '', '日付変更線を通過するので、同じ日の朝にホノルルに着きます'),
+        ev('2026-11-01', '08:10', 'HST', 'move', 'ホノルル着（ダニエル・K・イノウエ空港）', 'Daniel K. Inouye International Airport', 'EXIT1出口を出て、現地係員にLeaLea旅ナカアプリのバーコードを見せる。荷物を預けてLeaLeaラウンジへ案内後、解散'),
+        ev('2026-11-01', '15:00', 'HST', 'hotel', 'ハイアット リージェンシー ワイキキ チェックイン', 'Hyatt Regency Waikiki Beach Resort and Spa', '15:00以降。デラックスオーシャンビュー。リゾートフィー込み'),
+        ev('2026-11-02', '', 'HST', 'food', 'LeaLea絶景朝ごはん at スカイ ワイキキ', 'SKY Waikiki', '滞在中に1回利用できます。好きな日に直接レストランへ。行く日に移動してください'),
+        ev('2026-11-06', '', 'HST', 'other', '帰国日の集合時間・場所をアプリで確認', '', 'LeaLea旅ナカアプリで案内されます。フライトに合わせてドライバーと空港へ（ガイドは同行しません）。レアレア エアポートラウンジ利用可'),
+        ev('2026-11-06', '12:30', 'HST', 'move', 'ホノルル発 ANA NH181 成田へ', 'Daniel K. Inouye International Airport', '日付変更線を通過・機中泊'),
+        ev('2026-11-07', '16:35', 'JST', 'move', '成田着', 'Narita International Airport', ''),
+      ],
+      packing: ['パスポート', 'ESTA（承認の控え）', 'Eチケットレシート（お客様控え）', 'LeaLea旅ナカアプリ（スマホに入れておく）', 'クレジットカード', '米ドル現金（チップ用）', '海外旅行保険の証書', 'スマホ・充電器', '変換プラグ（不要：日本と同じA型）', '水着・ラッシュガード', 'サンダル', 'サンゴに優しい日焼け止め', 'サングラス・帽子', '常備薬', 'エコバッグ']
+        .map((text) => ({ id: uid(), text, done: false })),
+    };
+  }
+
+  let state;
+  try { state = JSON.parse(localStorage.getItem(KEY)); } catch { state = null; }
+  // 以前の例の日程が残っていれば日程表の内容に置き換える
+  if (!state || !state.trip || state.sample) state = tripData();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+  save();
+
+  let view = 'plan';
+  let selected = null;
+  let editing = null;
+  let formCat = 'sight';
+
+  const days = () => {
+    const n = Math.max(0, diffDays(state.trip.start, state.trip.end));
+    return Array.from({ length: Math.min(n + 1, 60) }, (_, i) => addDays(state.trip.start, i));
+  };
+  const fmtMD = (s) => { const d = parse(s); return `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）`; };
+  // 時差を考えた実際の時刻（UTC）。時間未定はその日の先頭
+  const absTime = (e) => {
+    if (!e.time) return -Infinity;
+    const [y, m, d] = e.date.split('-').map(Number), [h, mi] = e.time.split(':').map(Number);
+    return Date.UTC(y, m - 1, d, h, mi) - (e.tz === 'JST' ? 9 : -10) * 3600000;
+  };
+  const catOf = (id) => CATS.find((c) => c.id === id) || CATS[CATS.length - 1];
+
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 1800);
+  }
+
+  function renderHero() {
+    const t = state.trip, ds = days();
+    $('hero-title').textContent = t.title || 'ハワイ旅行';
+    $('hero-dates').textContent = `${fmtMD(t.start)} → ${fmtMD(t.end)}・${ds.length}日間`;
+    const today = ymd(new Date());
+    const before = diffDays(today, t.start), after = diffDays(t.end, today);
+    let html;
+    if (before > 0) html = `<span class="unit">出発まで あと</span><span class="big">${before}</span><span class="unit">日</span>`;
+    else if (after <= 0) html = `<span class="big">${-before + 1}</span><span class="unit">日目</span><span class="sub">楽しんでください。Aloha!</span>`;
+    else html = `<span class="unit">おかえりなさい。Mahalo!</span>`;
+    $('countdown').innerHTML = html;
+    const inRange = state.events.filter((e) => ds.includes(e.date));
+    const done = inRange.filter((e) => e.done).length;
+    $('bar').style.width = inRange.length ? `${(done / inRange.length) * 100}%` : '0';
+    $('progress-text').textContent = `完了した予定 ${done} / ${inRange.length}`;
+  }
+
+  function renderDays() {
+    const ds = days(), today = ymd(new Date());
+    if (!ds.includes(selected)) selected = ds.includes(today) ? today : ds[0];
+    $('days').innerHTML = ds.map((s, i) => {
+      const d = parse(s);
+      const cls = ['chip', s === selected && 'on', s === today && 'today', d.getDay() === 0 && 'sun'].filter(Boolean).join(' ');
+      return `<button type="button" class="${cls}" data-day="${s}" aria-pressed="${s === selected}">
+        <span class="d">DAY ${i + 1}</span><span class="n">${d.getMonth() + 1}/${d.getDate()}</span><span class="w">${WD[d.getDay()]}</span><span class="dot"></span></button>`;
+    }).join('');
+    const on = $('days').querySelector('.on');
+    if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  const pinIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+  const tickIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function renderPlan() {
+    const ds = days(), idx = ds.indexOf(selected);
+    $('day-title').textContent = `DAY ${idx + 1}・${fmtMD(selected)}`;
+    const list = state.events.filter((e) => e.date === selected)
+      .sort((a, b) => absTime(a) - absTime(b));
+    const done = list.filter((e) => e.done).length;
+    $('day-count').textContent = list.length ? `${done}/${list.length} 完了` : '';
+    if (!list.length) {
+      $('timeline').innerHTML = '<li class="empty">終日自由行動の日です。<br>右下の「予定を追加」から行きたい所を入れましょう。</li>';
+      return;
+    }
+    $('timeline').innerHTML = list.map((e) => {
+      const c = catOf(e.cat);
+      const map = e.place ? `<a class="place" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.place)}" target="_blank" rel="noopener">${pinIcon}${esc(e.place)}</a>` : '';
+      return `<li class="ev cat-${c.id}${e.done ? ' done' : ''}">
+        <div class="time${e.time ? '' : ' none'}">${e.time ? esc(e.time) : '時間未定'}${e.time && e.tz === 'JST' ? '<small class="tz">日本時間</small>' : ''}</div>
+        <div style="min-width:0;display:grid;gap:2px">
+          <button type="button" class="body" data-edit="${e.id}">
+            <span class="cat">${c.label}</span>
+            <span class="title">${esc(e.title)}</span>
+            ${e.memo ? `<span class="memo">${esc(e.memo)}</span>` : ''}
+          </button>
+          ${map}
+        </div>
+        <button type="button" class="check" data-toggle="${e.id}" aria-label="${esc(e.title)} を${e.done ? '未完了に戻す' : '完了にする'}" aria-pressed="${e.done}">${tickIcon}</button>
+      </li>`;
+    }).join('');
+  }
+
+  function renderPack() {
+    const p = state.packing, done = p.filter((x) => x.done).length;
+    $('pack-count').textContent = `${done} / ${p.length}`;
+    $('pack-list').innerHTML = p.length ? p.map((x) => `<li class="item${x.done ? ' done' : ''}">
+        <button type="button" class="check" data-ptoggle="${x.id}" aria-label="${esc(x.text)}" aria-pressed="${x.done}">${tickIcon}</button>
+        <span class="txt">${esc(x.text)}</span>
+        <button type="button" class="del" data-pdel="${x.id}" aria-label="${esc(x.text)} を削除">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </li>`).join('') : '<li class="item"><span class="txt hint">持ち物はまだありません</span></li>';
+  }
+
+  function fillTripForm() {
+    const t = state.trip;
+    $('t-title').value = t.title; $('t-start').value = t.start; $('t-end').value = t.end;
+    $('t-flight').value = t.flight || ''; $('t-hotel').value = t.hotel || ''; $('t-notes').value = t.notes || '';
+  }
+
+  function tickClock() {
+    const now = new Date();
+    const f = (tz, opt) => new Intl.DateTimeFormat('ja-JP', { timeZone: tz, ...opt }).format(now);
+    const hm = { hour: '2-digit', minute: '2-digit', hour12: false };
+    const md = { month: 'numeric', day: 'numeric', weekday: 'short' };
+    $('clk-hst').textContent = f('Pacific/Honolulu', hm); $('clk-hst-d').textContent = f('Pacific/Honolulu', md);
+    $('clk-jst').textContent = f('Asia/Tokyo', hm); $('clk-jst-d').textContent = f('Asia/Tokyo', md);
+  }
+
+  function render() {
+    renderHero(); renderDays(); renderPlan(); renderPack();
+    for (const v of ['plan', 'pack', 'info']) $('view-' + v).hidden = v !== view;
+    $('days-nav').hidden = view !== 'plan';
+    $('fab').hidden = view !== 'plan';
+    document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+  }
+
+  // Event sheet
+  function renderCats() {
+    $('e-cats').innerHTML = CATS.map((c) => `<button type="button" class="cat-${c.id}${c.id === formCat ? ' on' : ''}" data-cat="${c.id}">${c.label}</button>`).join('');
+  }
+  function openSheet(id) {
+    editing = id ? state.events.find((e) => e.id === id) : null;
+    const e = editing || { date: selected, time: '', tz: 'HST', cat: 'sight', title: '', place: '', memo: '' };
+    $('sheet-title').textContent = editing ? '予定を編集' : '予定を追加';
+    $('e-date').innerHTML = days().map((s, i) => `<option value="${s}">DAY ${i + 1}・${fmtMD(s)}</option>`).join('');
+    $('e-date').value = days().includes(e.date) ? e.date : selected;
+    $('e-time').value = e.time; $('e-tz').value = e.tz || 'HST'; $('e-title').value = e.title; $('e-place').value = e.place; $('e-memo').value = e.memo;
+    formCat = e.cat; renderCats();
+    $('e-del').hidden = !editing; disarm($('e-del'), '削除');
+    $('overlay').hidden = false;
+    if (!editing) setTimeout(() => $('e-title').focus(), 50);
+  }
+  const closeSheet = () => { $('overlay').hidden = true; editing = null; };
+
+  function arm(btn, label) {
+    if (btn.classList.contains('armed')) return true;
+    btn.classList.add('armed'); btn.textContent = label;
+    clearTimeout(btn._t); btn._t = setTimeout(() => disarm(btn, btn.dataset.orig), 3000);
+    return false;
+  }
+  function disarm(btn, label) { btn.classList.remove('armed'); btn.textContent = label; btn.dataset.orig = label; }
+
+  // Wiring
+  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => {
+    view = b.dataset.view; if (view === 'info') fillTripForm(); render(); window.scrollTo(0, 0);
+  }));
+  $('days').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-day]'); if (!b) return;
+    selected = b.dataset.day; renderDays(); renderPlan();
+  });
+  $('timeline').addEventListener('click', (ev) => {
+    const t = ev.target.closest('[data-toggle]');
+    if (t) {
+      const e = state.events.find((x) => x.id === t.dataset.toggle);
+      e.done = !e.done; save(); renderPlan(); renderHero();
+      if (e.done) toast('完了にしました');
+      return;
+    }
+    const ed = ev.target.closest('[data-edit]'); if (ed) openSheet(ed.dataset.edit);
+  });
+  $('fab').addEventListener('click', () => openSheet(null));
+  $('e-cats').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-cat]'); if (!b) return; formCat = b.dataset.cat; renderCats();
+  });
+  $('e-cancel').addEventListener('click', closeSheet);
+  $('overlay').addEventListener('click', (ev) => { if (ev.target === $('overlay')) closeSheet(); });
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('overlay').hidden) closeSheet(); });
+  $('ev-form').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const data = { date: $('e-date').value, time: $('e-time').value, tz: $('e-tz').value, cat: formCat,
+      title: $('e-title').value.trim(), place: $('e-place').value.trim(), memo: $('e-memo').value.trim() };
+    if (!data.title) return;
+    if (editing) Object.assign(editing, data);
+    else state.events.push({ id: uid(), done: false, ...data });
+    selected = data.date; save(); closeSheet(); render();
+    toast('保存しました');
+  });
+  $('e-del').addEventListener('click', () => {
+    if (!arm($('e-del'), 'もう一度押して削除')) return;
+    state.events = state.events.filter((e) => e !== editing);
+    save(); closeSheet(); render(); toast('削除しました');
+  });
+
+  $('pack-form').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const v = $('pack-input').value.trim(); if (!v) return;
+    state.packing.push({ id: uid(), text: v, done: false }); $('pack-input').value = '';
+    save(); renderPack();
+  });
+  $('pack-list').addEventListener('click', (ev) => {
+    const t = ev.target.closest('[data-ptoggle]'), d = ev.target.closest('[data-pdel]');
+    if (t) { const x = state.packing.find((p) => p.id === t.dataset.ptoggle); x.done = !x.done; }
+    else if (d) state.packing = state.packing.filter((p) => p.id !== d.dataset.pdel);
+    else return;
+    save(); renderPack();
+  });
+
+  $('trip-form').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const start = $('t-start').value, end = $('t-end').value;
+    if (diffDays(start, end) < 0) { toast('帰国日は出発日より後にしてください'); return; }
+    if (diffDays(start, end) > 59) { toast('期間は60日までです'); return; }
+    // Move events along with the trip when the start date shifts
+    const shift = diffDays(state.trip.start, start);
+    if (shift) state.events.forEach((e) => { e.date = addDays(e.date, shift); });
+    Object.assign(state.trip, { title: $('t-title').value.trim() || 'ハワイ旅行', start, end,
+      flight: $('t-flight').value, hotel: $('t-hotel').value, notes: $('t-notes').value });
+    save(); render(); toast('保存しました');
+  });
+
+  $('b-export').addEventListener('click', () => {
+    const text = JSON.stringify(state);
+    $('backup').value = text;
+    navigator.clipboard?.writeText(text).then(() => toast('コピーしました'), () => { $('backup').select(); toast('選択した文字をコピーしてください'); })
+      ?? ($('backup').select(), toast('選択した文字をコピーしてください'));
+  });
+  $('b-import').addEventListener('click', () => {
+    try {
+      const d = JSON.parse($('backup').value);
+      if (!d.trip || !Array.isArray(d.events) || !Array.isArray(d.packing)) throw 0;
+      state = d; save(); selected = null; fillTripForm(); render(); toast('読み込みました');
+    } catch { toast('データの形式が正しくありません'); }
+  });
+  $('b-reset').addEventListener('click', () => {
+    if (!arm($('b-reset'), 'もう一度押すと元に戻します')) return;
+    state = tripData(); save(); selected = null; disarm($('b-reset'), '日程表の内容に戻す');
+    fillTripForm(); render(); toast('日程表の内容に戻しました');
+  });
+  $('b-reset').dataset.orig = '日程表の内容に戻す';
+
+  tickClock(); setInterval(tickClock, 15000);
+  fillTripForm(); render();
+})();
+</script>
+</body>
+</html>
