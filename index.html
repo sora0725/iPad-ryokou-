@@ -125,6 +125,7 @@ main { padding-block: 16px 120px; }
   border-left: 4px solid var(--c, var(--lagoon));
 }
 .ev .time { font-family: var(--font-display); font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.ev .time .tz { display: block; font-family: var(--font-body); font-size: 10px; font-weight: 700; color: var(--hibiscus); }
 .ev .time.none { color: var(--muted); font-size: 12px; font-family: var(--font-body); }
 .ev .body { min-width: 0; border: 0; background: none; text-align: left; padding: 0; display: grid; gap: 2px; }
 .ev .cat { font-size: 11px; font-weight: 700; color: var(--c, var(--lagoon)); letter-spacing: .06em; }
@@ -252,10 +253,6 @@ main { padding-block: 16px 120px; }
 
 <main class="wrap">
   <section class="view" id="view-plan">
-    <div class="notice" id="sample-note" hidden>
-      <p>はじめに例の日程を入れています。予定をタップすると編集・削除できます。旅行の日付は「情報」タブで変えられます。</p>
-      <button type="button" id="clear-sample">例を消す</button>
-    </div>
     <div class="day-head"><h2 id="day-title"></h2><span id="day-count"></span></div>
     <ul class="timeline" id="timeline"></ul>
   </section>
@@ -304,7 +301,7 @@ main { padding-block: 16px 120px; }
         <div class="btns">
           <button class="btn ghost" type="button" id="b-export">データをコピー</button>
           <button class="btn ghost" type="button" id="b-import">読み込む</button>
-          <button class="btn danger" type="button" id="b-reset">すべて初期化</button>
+          <button class="btn danger" type="button" id="b-reset">日程表の内容に戻す</button>
         </div>
       </div>
     </div>
@@ -335,8 +332,10 @@ main { padding-block: 16px 120px; }
     <h3 id="sheet-title">予定を追加</h3>
     <div class="row2">
       <div class="field"><label for="e-date">日付</label><select id="e-date"></select></div>
-      <div class="field"><label for="e-time">時刻（ハワイ時間）</label><input id="e-time" type="time"></div>
+      <div class="field"><label for="e-time">時刻</label><input id="e-time" type="time"></div>
     </div>
+    <div class="field"><label for="e-tz">時刻の基準</label>
+      <select id="e-tz"><option value="HST">ハワイ時間</option><option value="JST">日本時間（日本の空港など）</option></select></div>
     <div class="field"><label>種類</label><div class="cats" id="e-cats"></div></div>
     <div class="field"><label for="e-title">予定</label><input id="e-title" required placeholder="例：ダイヤモンドヘッド登山"></div>
     <div class="field"><label for="e-place">場所（地図で開けます）</label><input id="e-place" placeholder="例：Diamond Head State Monument"></div>
@@ -372,39 +371,37 @@ main { padding-block: 16px 120px; }
   const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
   const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
 
-  function sampleData() {
-    const today = ymd(new Date());
-    const s = addDays(today, 30);
-    const d = (n) => addDays(s, n);
-    const ev = (n, time, cat, title, place, memo) => ({ id: uid(), date: d(n), time, cat, title, place: place || '', memo: memo || '', done: false });
+  // 出発のご案内（HIS）の日程表より。時刻は tz の現地時間
+  function tripData() {
+    const ev = (date, time, tz, cat, title, place, memo) => ({ id: uid(), date, time, tz, cat, title, place: place || '', memo: memo || '', done: false });
     return {
-      sample: true,
-      trip: { title: 'はじめてのオアフ島 5泊7日', start: s, end: d(6), flight: '', hotel: '', notes: '' },
+      version: 2,
+      trip: {
+        title: 'ANA ハワイ7日間 ハイアット',
+        start: '2026-11-01', end: '2026-11-07',
+        flight: '往路 ANA NH184　11/1 20:10 成田発 → 11/1 08:10 ホノルル着\n復路 ANA NH181　11/6 12:30 ホノルル発 → 11/7 16:35 成田着\n\n受付 11/1 18:10　成田空港 第1ターミナル 南ウィング4階 全日空チェックインカウンター（Eチケットレシートで各自チェックイン）',
+        hotel: 'HYATT REGENCY WAIKIKI BEACH RESORT\n（ハイアット リージェンシー ワイキキ リゾート&スパ）\nデラックスオーシャンビュー・5泊\n2424 Kalakaua Ave, Honolulu, HI 96815-3289\nTEL (1)808-923-1234\nチェックイン 15:00以降・リゾートフィー込み',
+        notes: '現地手配先：HISホノルル支店（ロイヤル・ハワイアン・センター 3F）\n緊急連絡先1：(1)808-923-3412（毎日 8:00〜18:00）\n緊急連絡先2：(1)808-922-6136（上記以外の時間）\n\n滞在中の特典\n・LeaLeaトロリー＆ワイキキトロリー アラモアナライン乗り放題\n・LeaLea絶景朝ごはん at スカイ ワイキキ（滞在中1回。好きな日に直接レストランへ）',
+      },
       events: [
-        ev(0, '08:45', 'move', 'ホノルル到着（成田 前夜20:30発）', 'Daniel K. Inouye International Airport', '日付変更線を越えるので出発と同じ日付に着きます。入国審査のあとシャトルでワイキキへ'),
-        ev(0, '11:00', 'food', 'ロコモコでランチ', 'Waikiki', ''),
-        ev(0, '15:00', 'hotel', 'ホテル チェックイン', '', ''),
-        ev(0, '17:30', 'sight', 'ワイキキビーチで夕日', 'Waikiki Beach', ''),
-        ev(1, '06:30', 'act', 'ダイヤモンドヘッド登山', 'Diamond Head State Monument', '入場は事前予約制。水と帽子'),
-        ev(1, '10:00', 'food', 'カパフル通りでパンケーキ', 'Kapahulu Ave, Honolulu', ''),
-        ev(1, '14:00', 'shop', 'アラモアナセンター', 'Ala Moana Center', ''),
-        ev(2, '08:00', 'act', 'ハナウマ湾でシュノーケル', 'Hanauma Bay Nature Preserve', '要予約・火水休み。ラッシュガード'),
-        ev(2, '15:00', 'sight', 'ノースショア・ハレイワの町', 'Haleiwa, HI', 'ガーリックシュリンプ'),
-        ev(3, '09:00', 'sight', 'カイルアビーチ', 'Kailua Beach Park', ''),
-        ev(3, '18:30', 'food', 'ディナー', '', '予約番号：'),
-        ev(4, '10:00', 'shop', 'ABCストアでおみやげ', 'ABC Stores Waikiki', ''),
-        ev(5, '09:00', 'hotel', 'チェックアウト', '', '空港へは出発の3時間前に'),
-        ev(5, '12:30', 'move', 'ホノルル 出発', 'Daniel K. Inouye International Airport', '日付変更線を越えて翌日着'),
-        ev(6, '16:30', 'move', '成田空港 到着', 'Narita International Airport', ''),
+        ev('2026-11-01', '18:10', 'JST', 'move', '成田空港で受付・チェックイン', 'Narita International Airport Terminal 1', '第1ターミナル 南ウィング4階 全日空チェックインカウンター。Eチケットレシート（お客様控え）で各自チェックイン'),
+        ev('2026-11-01', '20:10', 'JST', 'move', '成田発 ANA NH184 ホノルルへ', '', '日付変更線を通過するので、同じ日の朝にホノルルに着きます'),
+        ev('2026-11-01', '08:10', 'HST', 'move', 'ホノルル着（ダニエル・K・イノウエ空港）', 'Daniel K. Inouye International Airport', 'EXIT1出口を出て、現地係員にLeaLea旅ナカアプリのバーコードを見せる。荷物を預けてLeaLeaラウンジへ案内後、解散'),
+        ev('2026-11-01', '15:00', 'HST', 'hotel', 'ハイアット リージェンシー ワイキキ チェックイン', 'Hyatt Regency Waikiki Beach Resort and Spa', '15:00以降。デラックスオーシャンビュー。リゾートフィー込み'),
+        ev('2026-11-02', '', 'HST', 'food', 'LeaLea絶景朝ごはん at スカイ ワイキキ', 'SKY Waikiki', '滞在中に1回利用できます。好きな日に直接レストランへ。行く日に移動してください'),
+        ev('2026-11-06', '', 'HST', 'other', '帰国日の集合時間・場所をアプリで確認', '', 'LeaLea旅ナカアプリで案内されます。フライトに合わせてドライバーと空港へ（ガイドは同行しません）。レアレア エアポートラウンジ利用可'),
+        ev('2026-11-06', '12:30', 'HST', 'move', 'ホノルル発 ANA NH181 成田へ', 'Daniel K. Inouye International Airport', '日付変更線を通過・機中泊'),
+        ev('2026-11-07', '16:35', 'JST', 'move', '成田着', 'Narita International Airport', ''),
       ],
-      packing: ['パスポート', 'ESTA（承認の控え）', 'eチケット・予約確認書', 'クレジットカード', '米ドル現金（チップ用）', '海外旅行保険の証書', 'スマホ・充電器', '変換プラグ（不要：日本と同じA型）', '水着・ラッシュガード', 'サンダル', 'サンゴに優しい日焼け止め', 'サングラス・帽子', '常備薬', 'エコバッグ']
+      packing: ['パスポート', 'ESTA（承認の控え）', 'Eチケットレシート（お客様控え）', 'LeaLea旅ナカアプリ（スマホに入れておく）', 'クレジットカード', '米ドル現金（チップ用）', '海外旅行保険の証書', 'スマホ・充電器', '変換プラグ（不要：日本と同じA型）', '水着・ラッシュガード', 'サンダル', 'サンゴに優しい日焼け止め', 'サングラス・帽子', '常備薬', 'エコバッグ']
         .map((text) => ({ id: uid(), text, done: false })),
     };
   }
 
   let state;
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch { state = null; }
-  if (!state || !state.trip) state = sampleData();
+  // 以前の例の日程が残っていれば日程表の内容に置き換える
+  if (!state || !state.trip || state.sample) state = tripData();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
   save();
 
@@ -418,6 +415,12 @@ main { padding-block: 16px 120px; }
     return Array.from({ length: Math.min(n + 1, 60) }, (_, i) => addDays(state.trip.start, i));
   };
   const fmtMD = (s) => { const d = parse(s); return `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）`; };
+  // 時差を考えた実際の時刻（UTC）。時間未定はその日の先頭
+  const absTime = (e) => {
+    if (!e.time) return -Infinity;
+    const [y, m, d] = e.date.split('-').map(Number), [h, mi] = e.time.split(':').map(Number);
+    return Date.UTC(y, m - 1, d, h, mi) - (e.tz === 'JST' ? 9 : -10) * 3600000;
+  };
   const catOf = (id) => CATS.find((c) => c.id === id) || CATS[CATS.length - 1];
 
   function toast(msg) {
@@ -459,22 +462,21 @@ main { padding-block: 16px 120px; }
   const tickIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   function renderPlan() {
-    $('sample-note').hidden = !state.sample;
     const ds = days(), idx = ds.indexOf(selected);
     $('day-title').textContent = `DAY ${idx + 1}・${fmtMD(selected)}`;
     const list = state.events.filter((e) => e.date === selected)
-      .sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
+      .sort((a, b) => absTime(a) - absTime(b));
     const done = list.filter((e) => e.done).length;
     $('day-count').textContent = list.length ? `${done}/${list.length} 完了` : '';
     if (!list.length) {
-      $('timeline').innerHTML = '<li class="empty">この日の予定はまだありません。<br>右下の「予定を追加」から入れましょう。</li>';
+      $('timeline').innerHTML = '<li class="empty">終日自由行動の日です。<br>右下の「予定を追加」から行きたい所を入れましょう。</li>';
       return;
     }
     $('timeline').innerHTML = list.map((e) => {
       const c = catOf(e.cat);
       const map = e.place ? `<a class="place" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.place)}" target="_blank" rel="noopener">${pinIcon}${esc(e.place)}</a>` : '';
       return `<li class="ev cat-${c.id}${e.done ? ' done' : ''}">
-        <div class="time${e.time ? '' : ' none'}">${e.time ? esc(e.time) : '時間未定'}</div>
+        <div class="time${e.time ? '' : ' none'}">${e.time ? esc(e.time) : '時間未定'}${e.time && e.tz === 'JST' ? '<small class="tz">日本時間</small>' : ''}</div>
         <div style="min-width:0;display:grid;gap:2px">
           <button type="button" class="body" data-edit="${e.id}">
             <span class="cat">${c.label}</span>
@@ -528,11 +530,11 @@ main { padding-block: 16px 120px; }
   }
   function openSheet(id) {
     editing = id ? state.events.find((e) => e.id === id) : null;
-    const e = editing || { date: selected, time: '', cat: 'sight', title: '', place: '', memo: '' };
+    const e = editing || { date: selected, time: '', tz: 'HST', cat: 'sight', title: '', place: '', memo: '' };
     $('sheet-title').textContent = editing ? '予定を編集' : '予定を追加';
     $('e-date').innerHTML = days().map((s, i) => `<option value="${s}">DAY ${i + 1}・${fmtMD(s)}</option>`).join('');
     $('e-date').value = days().includes(e.date) ? e.date : selected;
-    $('e-time').value = e.time; $('e-title').value = e.title; $('e-place').value = e.place; $('e-memo').value = e.memo;
+    $('e-time').value = e.time; $('e-tz').value = e.tz || 'HST'; $('e-title').value = e.title; $('e-place').value = e.place; $('e-memo').value = e.memo;
     formCat = e.cat; renderCats();
     $('e-del').hidden = !editing; disarm($('e-del'), '削除');
     $('overlay').hidden = false;
@@ -575,7 +577,7 @@ main { padding-block: 16px 120px; }
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('overlay').hidden) closeSheet(); });
   $('ev-form').addEventListener('submit', (ev) => {
     ev.preventDefault();
-    const data = { date: $('e-date').value, time: $('e-time').value, cat: formCat,
+    const data = { date: $('e-date').value, time: $('e-time').value, tz: $('e-tz').value, cat: formCat,
       title: $('e-title').value.trim(), place: $('e-place').value.trim(), memo: $('e-memo').value.trim() };
     if (!data.title) return;
     if (editing) Object.assign(editing, data);
@@ -587,9 +589,6 @@ main { padding-block: 16px 120px; }
     if (!arm($('e-del'), 'もう一度押して削除')) return;
     state.events = state.events.filter((e) => e !== editing);
     save(); closeSheet(); render(); toast('削除しました');
-  });
-  $('clear-sample').addEventListener('click', () => {
-    state.events = []; state.sample = false; save(); render(); toast('例の日程を消しました');
   });
 
   $('pack-form').addEventListener('submit', (ev) => {
@@ -633,11 +632,11 @@ main { padding-block: 16px 120px; }
     } catch { toast('データの形式が正しくありません'); }
   });
   $('b-reset').addEventListener('click', () => {
-    if (!arm($('b-reset'), 'もう一度押して初期化')) return;
-    state = sampleData(); save(); selected = null; disarm($('b-reset'), 'すべて初期化');
-    fillTripForm(); render(); toast('初期化しました');
+    if (!arm($('b-reset'), 'もう一度押すと元に戻します')) return;
+    state = tripData(); save(); selected = null; disarm($('b-reset'), '日程表の内容に戻す');
+    fillTripForm(); render(); toast('日程表の内容に戻しました');
   });
-  $('b-reset').dataset.orig = 'すべて初期化';
+  $('b-reset').dataset.orig = '日程表の内容に戻す';
 
   tickClock(); setInterval(tickClock, 15000);
   fillTripForm(); render();
